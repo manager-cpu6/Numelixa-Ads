@@ -1,0 +1,24 @@
+name: NUMELIXA ADS CI
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/numelixa_ads
+          MONGODB_DB: numelixa_ads
+          SESSION_SECRET: ci-only-session-secret-that-is-long-enough-32chars
+          ADMIN_BOOTSTRAP_SECRET: ci-only-bootstrap-secret-that-is-long-enough
+          NUMELIXA_ADS_ADMIN_EMAILS: ci-admin@example.com
