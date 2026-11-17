@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {db} from "@/lib/db";export async function GET(){try{await (await db()).command({ping:1});return NextResponse.json({ok:true,service:'numelixa-ads',database:'connected'})}catch{return NextResponse.json({ok:false,service:'numelixa-ads',database:'unavailable'},{status:503})}}
