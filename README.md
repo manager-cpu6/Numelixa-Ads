@@ -1,23 +1,21 @@
 # NUMELIXA ADS
 
-A standalone, first-party publisher monetization platform. All advertising inventory and creatives are owned and controlled by Numelixa administrators; there is no public advertiser marketplace.
+Standalone Numelixa-owned publisher monetization platform. There is no public advertiser marketplace or advertiser campaign signup.
 
-## Architecture
+## Foundation stage in this branch
+- Next.js App Router, TypeScript and MongoDB access layer
+- Signed HTTP-only sessions and bcrypt password hashes
+- Public publisher registration/login; public registration can never grant admin privileges
+- One-time admin bootstrap protected by a separate secret and email allowlist
+- Website onboarding with unique tokens; server-side DNS TXT, HTML file and meta tag checks
+- Admin review queue and automatic five-zone creation after approval
+- Publisher/admin dashboards and basic database-backed views
+- Ad retrieval and untrusted event-ingestion baseline
 
-- Next.js App Router + TypeScript
-- MongoDB Atlas for application data
-- Signed, HTTP-only session cookies
-- Server-side role checks; admin emails configured with `NUMELIXA_ADS_ADMIN_EMAILS`
-- Separate Vercel project and environment variables from Numelixa's existing website
+## Not yet production complete
+Campaign/creative/video builder, media pipeline, CDN SDK, signed click redirects, bot/fraud detection, trusted impression validation, API keys, webhooks, rate limits, aggregate reporting, financial ledger and withdrawals remain future stages. Browser-originated events are deliberately stored as untrusted and cannot fund publisher revenue.
 
-## Local development
+## Environment
+Copy .env.example to .env.local. Use a dedicated MongoDB database and a separate Vercel project. Set NUMELIXA_ADS_ADMIN_EMAILS to exact admin email(s), ADMIN_BOOTSTRAP_SECRET to a strong one-time secret, and SESSION_SECRET to 32+ random characters. Register your admin email as a normal publisher first, then POST to /api/admin/bootstrap with email, password and secret. Bootstrap is disabled after the first admin is created.
 
-1. Copy `.env.example` to `.env.local` and fill every required secret.
-2. `npm install`
-3. `npm run dev`
-
-Never deploy with placeholder secrets. DNS ownership checks must be performed from the server. Publisher event requests are treated as untrusted until validated and deduplicated server-side.
-
-## Deployment
-
-Create a dedicated Vercel project connected only to `manager-cpu6/Numelixa-Ads`. Add the five requested subdomains as domains/routing aliases after DNS is configured. Production activation requires a real MongoDB database, strong session secret, and explicit admin email allowlist.
+Never reuse Virt-num production secrets.
