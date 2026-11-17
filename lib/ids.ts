@@ -1,0 +1,1 @@
+import {randomBytes} from "node:crypto";export const makeId=(p:string)=>p+"_"+randomBytes(10).toString("hex")
