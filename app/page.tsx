@@ -1,1 +1,2 @@
+export const dynamic = "force-dynamic";
 import {redirect} from "next/navigation";import {getSession} from "@/lib/security";export default async function Home(){const s=await getSession();redirect(s?(s.role==="admin"?"/admin":"/dashboard"):"/login")}
