@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";import {randomBytes,timingSafeEqual} from "node:cr
 const email=emailRaw.trim().toLowerCase();
 const adminEmail=(process.env.ADMIN_EMAIL||"").trim().toLowerCase();
 const adminPassword=process.env.ADMIN_PASSWORD||"";
-if(adminEmail&&adminPassword.length>=16&&email===adminEmail&&password.length===adminPassword.length&&timingSafeEqual(Buffer.from(password),Buffer.from(adminPassword))){
+const suppliedPassword=Buffer.from(password);const expectedPassword=Buffer.from(adminPassword);if(adminEmail&&expectedPassword.length>=16&&email===adminEmail&&suppliedPassword.length===expectedPassword.length&&timingSafeEqual(suppliedPassword,expectedPassword)){
 await createSession({userId:"env-admin",email:adminEmail,role:"admin"} as Session);
 return "admin";
 }
