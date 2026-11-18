@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {ShieldCheck,ArrowLeft,MailCheck} from "lucide-react";
+import {ShieldCheck,ArrowLeft,MailCheck,LockKeyhole} from "lucide-react";
 export default async function Verify({searchParams}:{searchParams:Promise<{email?:string;error?:string}>}){
   const p=await searchParams;
   const messages:Record<string,string>={INVALID_CODE:"Enter a valid 6-digit code.",INVALID_OR_EXPIRED_CODE:"This code is invalid or has expired. Request a new code and try again.",RATE_LIMITED:"Too many attempts. Please wait and try again."};
