@@ -1,1 +1,46 @@
-import {NextResponse} from "next/server";export async function GET(){const js=`(()=>{"use strict";const s=document.currentScript;if(!s)return;const websiteId=s.dataset.websiteId,zoneId=s.dataset.zoneId;if(!websiteId||!zoneId)return;const u="https://api-ads.virtunumber.online/v1/ads/serve?websiteId="+encodeURIComponent(websiteId)+"&zoneId="+encodeURIComponent(zoneId);fetch(u,{credentials:"omit",mode:"cors"}).then(r=>r.ok?r.json():null).then(d=>{if(!d||!d.ad||!d.ad.creative)return;try{const k="numelixa-ads-frequency-"+d.ad.adId,day=new Date().toISOString().slice(0,10),old=JSON.parse(localStorage.getItem(k)||"{}"),count=old.day===day?Number(old.count)||0:0,cap=Math.max(1,Number(d.ad.frequencyCap)||3);if(count>=cap)return;localStorage.setItem(k,JSON.stringify({day,count:count+1}))}catch{}const c=d.ad.creative;const f=document.createElement("iframe");f.title="Sponsored content";f.setAttribute("sandbox","allow-scripts allow-popups");f.setAttribute("loading","lazy");f.referrerPolicy="strict-origin-when-cross-origin";f.style.cssText="display:block;width:100%;max-width:100%;height:"+(d.ad.format==="floating_video"?"190px":"300px")+";border:0;background:transparent;";if(d.ad.format==="floating_video"){const w=document.createElement("div");w.style.cssText="position:fixed;right:12px;bottom:12px;width:320px;max-width:calc(100vw - 24px);z-index:2147483000;background:#07101e;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px #0008";f.style.width="100%";f.style.height="190px";f.style.borderRadius="14px";const x=document.createElement("button");x.type="button";x.textContent="×";x.setAttribute("aria-label","Close sponsored video");x.style.cssText="position:absolute;right:7px;top:7px;z-index:2;width:28px;height:28px;border:0;border-radius:50%;background:#07101ecc;color:#fff;font-size:20px;cursor:pointer";x.addEventListener("click",()=>w.remove());w.style.position="fixed";w.appendChild(f);w.appendChild(x);s.parentNode&&s.parentNode.insertBefore(w,s.nextSibling)}else{s.parentNode&&s.parentNode.insertBefore(f,s.nextSibling)}f.srcdoc=typeof c.html==="string"?c.html:""}).catch(()=>{})})();`;return new NextResponse(js,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","access-control-allow-origin":"*","x-content-type-options":"nosniff"}})}
+import {NextResponse} from "next/server";
+export async function GET(){
+ const js = `(()=>{"use strict";
+ const script=document.currentScript;
+ if(!script||script.dataset.numelixaAdsLoaded)return;
+ script.dataset.numelixaAdsLoaded="1";
+ const websiteId=script.dataset.websiteId,zoneId=script.dataset.zoneId;
+ if(!websiteId||!zoneId)return;
+ let lastPath="",activeNode=null,requestNo=0;
+ const endpoint="https://api-ads.virtunumber.online/v1/ads/serve?websiteId="+encodeURIComponent(websiteId)+"&zoneId="+encodeURIComponent(zoneId);
+ async function render(){
+  const path=location.pathname+location.search;
+  if(path===lastPath)return;
+  lastPath=path;
+  const request=++requestNo;
+  if(activeNode){activeNode.remove();activeNode=null;}
+  try{
+   const response=await fetch(endpoint,{credentials:"omit",mode:"cors",cache:"no-store"});
+   if(!response.ok)return;
+   const data=await response.json();
+   if(request!==requestNo||!data||!data.ad||!data.ad.creative)return;
+   const ad=data.ad,key="numelixa-ads-frequency-"+ad.adId,day=new Date().toISOString().slice(0,10);
+   try{const old=JSON.parse(localStorage.getItem(key)||"{}"),count=old.day===day?Number(old.count)||0:0,cap=Math.max(1,Number(ad.frequencyCap)||3);if(count>=cap)return;localStorage.setItem(key,JSON.stringify({day,count:count+1}));}catch{}
+   const frame=document.createElement("iframe");
+   frame.title="Sponsored content";frame.setAttribute("sandbox","allow-scripts allow-popups");frame.setAttribute("loading","lazy");frame.referrerPolicy="strict-origin-when-cross-origin";
+   frame.style.cssText="display:block;width:100%;max-width:100%;height:"+(ad.format==="floating_video"?"190px":"300px")+";border:0;background:transparent;";
+   const wrap=document.createElement("div");wrap.dataset.numelixaAd="1";
+   if(ad.format==="floating_video"){
+    wrap.style.cssText="position:fixed;right:12px;bottom:12px;width:320px;max-width:calc(100vw - 24px);z-index:2147483000;background:#07101e;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px #0008";
+    frame.style.height="190px";frame.style.borderRadius="14px";
+    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close sponsored video");close.style.cssText="position:absolute;right:7px;top:7px;z-index:2;width:28px;height:28px;border:0;border-radius:50%;background:#07101ecc;color:#fff;font-size:20px;cursor:pointer";close.addEventListener("click",()=>wrap.remove());wrap.append(frame,close);
+   }else{wrap.style.cssText="display:block;width:100%;max-width:100%;margin:18px auto;";wrap.append(frame);}
+   frame.srcdoc=typeof ad.creative.html==="string"?ad.creative.html:"";
+   if(script.isConnected)script.insertAdjacentElement("afterend",wrap);else document.body.append(wrap);
+   activeNode=wrap;
+  }catch{}
+ }
+ const schedule=()=>{if(location.pathname+location.search!==lastPath)render();};
+ const originalPush=history.pushState.bind(history),originalReplace=history.replaceState.bind(history);
+ history.pushState=function(){const result=originalPush(...arguments);queueMicrotask(schedule);return result;};
+ history.replaceState=function(){const result=originalReplace(...arguments);queueMicrotask(schedule);return result;};
+ addEventListener("popstate",schedule);
+ render();
+})();`;
+ return new NextResponse(js,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","access-control-allow-origin":"*","x-content-type-options":"nosniff"}});
+}
