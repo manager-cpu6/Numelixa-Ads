@@ -7,3 +7,13 @@ await createSession({userId:"env-admin",email:adminEmail,role:"admin"} as Sessio
 return "admin";
 }
 const u=await (await db()).collection("users").findOne({email});if(!u||u.status!=="active"||!u.passwordHash||!await bcrypt.compare(password,u.passwordHash))throw new Error("INVALID_CREDENTIALS");const role=u.role==="admin"?"admin":"publisher";await createSession({userId:u._id.toString(),email,role} as Session);return role}export async function bootstrapAdmin(emailRaw:string,password:string,secret:string){const configured=process.env.ADMIN_BOOTSTRAP_SECRET||"";if(configured.length<32||secret.length!==configured.length||!timingSafeEqual(Buffer.from(secret),Buffer.from(configured)))throw new Error("FORBIDDEN");const email=emailRaw.trim().toLowerCase();const allow=(process.env.NUMELIXA_ADS_ADMIN_EMAILS||"").split(",").map(x=>x.trim().toLowerCase());if(!allow.includes(email)||!/^\S+@\S+\.\S+$/.test(email)||password.length<12||password.length>128)throw new Error("FORBIDDEN");const d=await db();if(await d.collection("users").countDocuments({role:"admin"})>0)throw new Error("ADMIN_ALREADY_BOOTSTRAPPED");let u=await d.collection("users").findOne({email});if(u){if(!await bcrypt.compare(password,u.passwordHash||""))throw new Error("INVALID_CREDENTIALS");await d.collection("users").updateOne({_id:u._id},{$set:{role:"admin",updatedAt:new Date()}})}else{const result=await d.collection("users").insertOne({email,passwordHash:await bcrypt.hash(password,12),role:"admin",status:"active",publisherId:"pub_"+randomBytes(10).toString("hex"),createdAt:new Date()});u=await d.collection("users").findOne({_id:result.insertedId})}if(!u)throw new Error("ADMIN_BOOTSTRAP_FAILED");await createSession({userId:u._id.toString(),email,role:"admin"} as Session);return true}
+export async function verifyCredentials(emailRaw:string,password:string):Promise<{userId:string;email:string;role:"admin"|"publisher"}>{
+const email=emailRaw.trim().toLowerCase();
+const adminEmail=(process.env.ADMIN_EMAIL||"").trim().toLowerCase();
+const adminPassword=process.env.ADMIN_PASSWORD||"";
+const supplied=Buffer.from(password),expected=Buffer.from(adminPassword);
+if(adminEmail&&expected.length>=16&&email===adminEmail&&supplied.length===expected.length&&timingSafeEqual(supplied,expected))return{userId:"env-admin",email:adminEmail,role:"admin"};
+const u=await(await db()).collection("users").findOne({email});
+if(!u||u.status!=="active"||!u.passwordHash||!await bcrypt.compare(password,u.passwordHash))throw new Error("INVALID_CREDENTIALS");
+return{userId:u._id.toString(),email,role:u.role==="admin"?"admin":"publisher"};
+}
