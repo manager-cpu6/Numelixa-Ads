@@ -11,7 +11,7 @@ export default async function Detail({params}:{params:Promise<{id:string}>}){
  const s=await getSession();if(!s)redirect("/login");
  const d=await db();const w=await d.collection("websites").findOne({_id:new ObjectId(id),publisherId:s.userId});if(!w)notFound();
  const zones=await d.collection("zones").find({websiteId:w.websiteId,status:"active"}).toArray();
- const installCode="<script async src='https://cdn-ads.virtunumber.online/sdk.js' data-website-id='"+w.websiteId+"'></script>";
+ const installCode="<script async src='https://cdn-ads.virtunumber.online/api/sdk.js' data-website-id='"+w.websiteId+"'></script>";
  return <DashboardShell>
   <div className="topbar" style={{alignItems:"flex-start"}}><div><div className="eyebrow">PUBLISHER · WEBSITE CONTROL</div><h1 className="h1">{w.domain}</h1><p className="sub">Ownership verification, domain routing and advertising delivery</p></div><span className="pill">{w.status==="approved"?"ADS APPROVED":String(w.status).toUpperCase()}</span></div>
   <div className="glass panel"><div className="actions">{w.verifiedAt&&<span className="pill">Ownership verified</span>}{w.status==="approved"&&<span className="pill">Ad zones active</span>}{w.reviewStatus==="under_review"&&<span className="pill review">Under review</span>}{w.reviewStatus==="changes_requested"&&<span className="pill pending">Changes requested</span>}</div>
